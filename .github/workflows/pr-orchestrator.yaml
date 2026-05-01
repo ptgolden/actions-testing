@@ -20,8 +20,8 @@ jobs:
     secrets: inherit
 
   run_ontology_qc:
-    needs: normalize_mondo_edit
-    if: needs.normalize_mondo_edit.outputs.pushed != 'true'
+    needs: run_normalize_mondo_edit
+    if: needs.run_normalize_mondo_edit.outputs.pushed != 'true'
     uses: ./.github/workflows/qc.yaml
     permissions:
       contents: read
