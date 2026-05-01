@@ -23,6 +23,7 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: app-token
+        if: ${{ inputs.same_repo }}
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.NORMALIZER_BOT_CLIENT_ID }}
