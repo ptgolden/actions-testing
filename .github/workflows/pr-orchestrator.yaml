@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  normalize_mondo_edit:
+  run_normalize_mondo_edit:
     uses: ./.github/workflows/normalize-mondo-edit.yaml
     permissions:
       contents: write
@@ -19,7 +19,7 @@ jobs:
       same_repo: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     secrets: inherit
 
-  ontology_qc:
+  run_ontology_qc:
     needs: normalize_mondo_edit
     if: needs.normalize_mondo_edit.outputs.pushed != 'true'
     uses: ./.github/workflows/qc.yaml
