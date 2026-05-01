@@ -21,17 +21,23 @@ jobs:
       pushed: ${{ steps.push.outputs.pushed }}
 
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.NORMALIZER_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.NORMALIZER_BOT_PRIVATE_KEY }}
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.pr_branch }}
           fetch-depth: 1
-          token: ${{ github.token }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Configure git
         if: ${{ inputs.same_repo }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "normalizer-bot[bot]"
+          git config --global user.email "normalizer-bot[bot]@users.noreply.github.com"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Normalize PR file
@@ -55,9 +61,3 @@ jobs:
             echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
-
-      - name: Run QC if normalization produced changes
-        if: ${{ steps.push.outputs.pushed == 'true' }}
-        run: |
-          cd src/ontology
-          make test

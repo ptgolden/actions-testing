@@ -14,8 +14,6 @@ jobs:
           fetch-depth: 1
 
       - name: Run ontology QC checks
-        env:
-          DEFAULT_BRANCH: master
         run: |
           cd src/ontology
           make test
