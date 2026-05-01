@@ -26,3 +26,27 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
+
+  merge_gate:
+    runs-on: ubuntu-latest
+    needs:
+      - normalize_mondo_edit
+      - ontology_qc
+    if: always()
+    steps:
+      - name: Check orchestrator result
+        run: |
+          qc="${{ needs.ontology_qc.result }}"
+          normalize="${{ needs.normalize_mondo_edit.result }}"
+          pushed="${{ needs.normalize_mondo_edit.outputs.pushed }}"
+
+          if [ "$normalize" != "success" ]; then
+            exit 1
+          fi
+
+          if [ "$pushed" = "false" ]; then
+            if [ "$qc" != "success" ]; then
+              exit 1
+            fi
+            exit 0
+          fi

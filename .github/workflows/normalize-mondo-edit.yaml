@@ -17,7 +17,6 @@ on:
 jobs:
   normalize_mondo_edit:
     runs-on: ubuntu-latest
-    container: obolibrary/odkfull:v1.6
     outputs:
       pushed: ${{ steps.push.outputs.pushed }}
 
