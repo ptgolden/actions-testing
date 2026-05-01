@@ -1,0 +1,64 @@
+name: Normalize mondo-edit.obo
+
+on:
+  workflow_call:
+    inputs:
+      pr_branch:
+        required: true
+        type: string
+      same_repo:
+        required: true
+        type: boolean
+    outputs:
+      pushed:
+        description: "Whether normalization pushed a new commit"
+        value: ${{ jobs.normalize_mondo_edit.outputs.pushed }}
+
+jobs:
+  normalize_mondo_edit:
+    runs-on: ubuntu-latest
+    container: obolibrary/odkfull:v1.6
+    outputs:
+      pushed: ${{ steps.push.outputs.pushed }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pr_branch }}
+          fetch-depth: 1
+          token: ${{ github.token }}
+
+      - name: Configure git
+        if: ${{ inputs.same_repo }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Normalize PR file
+        run: |
+          cd src/ontology
+          make NORM && mv NORM mondo-edit.obo
+
+      - name: Commit and push if changed
+        id: push
+        run: |
+          if git diff --quiet -- src/ontology/mondo-edit.obo; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          elif ${{ inputs.same_repo }}; then
+            git add src/ontology/mondo-edit.obo
+            git commit -m "Normalize mondo-edit.obo"
+            git push origin "HEAD:${{ inputs.pr_branch }}"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error file=src/ontology/mondo-edit.obo::mondo-edit.obo is not normalized. Fork PRs cannot be auto-normalized; please run 'make NORM && mv NORM mondo-edit.obo' and commit the result."
+            git --no-pager diff -- src/ontology/mondo-edit.obo
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Run QC if normalization produced changes
+        if: ${{ steps.push.outputs.pushed == 'true' }}
+        run: |
+          cd src/ontology
+          make GITHUB_ACTION=true IMP=false PAT=false test -B
