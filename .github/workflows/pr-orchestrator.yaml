@@ -2,7 +2,7 @@ name: PR orchestrator
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 concurrency:
   # Only allow one run at a time for any PR
