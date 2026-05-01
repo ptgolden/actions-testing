@@ -61,4 +61,4 @@ jobs:
         if: ${{ steps.push.outputs.pushed == 'true' }}
         run: |
           cd src/ontology
-          make GITHUB_ACTION=true IMP=false PAT=false test -B
+          make test
