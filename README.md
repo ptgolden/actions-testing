@@ -10,3 +10,19 @@ This repository implements the workflow we need with a stupidly minimal example,
 
 - `make test` runs QC on `mondo-edit.obo` (it checks if the word "ERROR" is present)
 - it checks if `mondo-edit.obo` is normalized and auto-commits any fixes in the same way as in mondo (the `NORM` target). (normalization means the file matches the output of `sort`)
+
+What's different here is that authentication happens with a GitHub App token rather than `GITHUB_TOKEN`. Because of that, automatic normalization commits *do* trigger workflows to run again. This simplifies things and lets us have this:
+
+- A PR orchestrator is the top level PR check. It calls two different workflows
+    1.`normalize-mondo.edit.yaml`, which checks for normalization and auto-commits a normalized `mondo-edit.obo` if not
+    2. `qc.yaml`, which runs `make test`. This step is skipped if the previous step resulted in a push
+- After calling those, a `merge_gate` step checks that both of these workflows were successful. (This is necessary because if `qc.yaml` is skipped, there are no failing checks, and it looks in the GitHub UI like "everything is green" for the commit before normalization, even if QC was not run).
+
+Branch protection points to the `merge_gate` step.
+
+---
+
+This requires [registering a GitHub App](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app), which I imagine we should do in the `monarch-initiative` organization. The app I set up here has exactly one permission, which allows it to make commits:
+<img width="744" height="90" alt="image" src="https://github.com/user-attachments/assets/48a7e6ee-da2e-4ed5-be8a-9ddf3bc17ef1" />
+
+After installing the app, [the `create-github-app-token` workflow generates app tokens](https://github.com/actions/create-github-app-token#usage) to be used in the `normalize-mondo-edit.yaml` workflow to authenticate pushed commits.
